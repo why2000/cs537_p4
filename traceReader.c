@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "traceReader.h"
 #include "process.h"
-#include "Queue.h"
+#include <search.h>
 
 /**
  * Set up the graph and start making
@@ -14,6 +14,7 @@
  * @param target the name of target
  */
 void parseTrace(const char* const tracefile, const ulong pageSize, const ulong realMemSize){
+    const ulong IOtick = 2000000;
     FILE* fp;
     char bufLine[MAX_LINE];
     // load tracefile
@@ -21,8 +22,10 @@ void parseTrace(const char* const tracefile, const ulong pageSize, const ulong r
         perror("Unable to open tracefile\n");
         exit(1);
     }
+    Statistic* sta = (Statistic*)malloc(sizeof(Statistic));
+    sta->TMU = realMemSize/pageSize;
     Process* rootProcess;
-    loadProcess(fp, &rootProcess);
+    loadProcess(fp, sta, &rootProcess);
     fseek(fp, 0, SEEK_SET);
     // value is pid
     Queue* IOQueue;
@@ -30,24 +33,69 @@ void parseTrace(const char* const tracefile, const ulong pageSize, const ulong r
         fprintf(stderr, "Unable to malloc\n");
         exit(1);
     }
-    ulong clock = 0;
-    ulong lineNum = 0;
     while(fgets(bufLine, MAX_LINE, fp) != NULL){
-        lineNum++;
         ulong pid, vpn;
         int lineFlag = readPair(&pid, &vpn, bufLine);
         if(lineFlag == 2) continue;
         if(lineFlag == 1){
-            fprintf(stderr, "Error parsing trace file at line %ld\n", lineNum);
+            fprintf(stderr, "Error parsing trace file\n");
             exit(1);
         }
-        if(ftell(fp) < getCurr(pid)) continue;
-        //if(getPage(pid, vpn) == 0)
-        {
-            // set pid's fp
-            enQueue(pid, IOQueue);
+        Process* process = getProcess(&rootProcess, pid);
+        ulong filePlace = ftell(fp);
+        // if already proceeded
+        if(filePlace < process->curr) continue;
+        // if just started
+        if(process->started == 0) {
+            process->started = 1;
+            sta->CRP++;
         }
-        clock++;
+        process->currVpn = vpn;
+        process->curr = filePlace;
+        // check page
+        //if(getPage(pid, vpn) == NULL)
+        {
+            enQueue(process, IOQueue);
+            process->waiting = 1;
+            sta->TPI++;
+        }
+        // if process complete after a normal access, not waiting for IO
+        if(filePlace > process->last && !(process->waiting)){
+            // endProcess();
+            process = NULL;
+            sta->CRP--;
+        }
+        // ticking (this ref action finished)
+        sta->RT++;
+        if(IOQueue->first != NULL){
+            IOQueue->counter++;
+        }
+        // IO queue action
+        if(IOQueue->counter == IOtick){
+            Process* newProcess;
+            IOQueue->counter = 0;
+            newProcess = deQueue(IOQueue);
+            newProcess->waiting = 0;
+            // Page loaded and get read, additional 1ns spent here
+            // loadPage(newProcess->pid, newProcess->currVpn);
+            sta->RT++;
+            IOQueue->counter++;
+            // if the IOtick is 1, there should be a recursive check, unrealistic here
+            // If process completes after IO
+            if(newProcess->curr == newProcess->last){
+                // endProcess(newProcess);
+                newProcess = NULL;
+                sta->CRP--;
+                continue;
+            }
+            // judge whether to go backward
+            if(newProcess->curr < ftell(fp)){
+                if(fseek(fp, newProcess->curr, SEEK_SET) == -1){
+                    fprintf(stderr, "Error moving file pointer\n");
+                    exit(1);
+                }
+            }
+        }
 
 
     }
@@ -58,22 +106,30 @@ void parseTrace(const char* const tracefile, const ulong pageSize, const ulong r
 
 }
 
-void loadProcess(FILE* fp, Process** root){
+
+
+void loadProcess(FILE* fp, Statistic* sta, Process** root){
     char bufLine[MAX_LINE];
-    ulong lineNum = 0;
+    sta->TMR = 0;
     while(fgets(bufLine, MAX_LINE, fp) != NULL){
         ulong pid, vpn;
         int lineFlag = readPair(&pid, &vpn, bufLine);
+        // jump empty line, not adding to TMR
         if(lineFlag == 2) continue;
+        sta->TMR++;
         if(lineFlag == 1){
-            fprintf(stderr, "Error parsing trace file at line %ld\n", lineNum);
+            fprintf(stderr, "Error parsing trace file at line %ld\n", sta->TMR);
             exit(1);
         }
         Process* curProcess;
-        if((curProcess = addProcess(root, pid)) == NULL){
-            fprintf(stderr, "Error adding process\n");
-            exit(1);
+        if((curProcess = getProcess(root, pid)) == NULL) {
+            Process* bufProcess = (Process*)malloc(sizeof(Process));
+            if ((curProcess = addProcess(root, bufProcess)) != bufProcess) {
+                fprintf(stderr, "Error adding process\n");
+                exit(1);
+            }
         }
+        curProcess->last = ftell(fp);
     }
     if(!feof(fp)){
         fprintf(stderr, "Unsupported tracefile format\n");
@@ -81,15 +137,6 @@ void loadProcess(FILE* fp, Process** root){
     }
 }
 
-ulong ticking(Queue* queue){
-    if(queue->first != NULL){
-        queue->counter++;
-    }
-    if(queue->counter == IOtick){
-        queue->counter = 0;
-        return deQueue(queue);
-    }
-}
 
 
 /**
