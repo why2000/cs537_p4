@@ -1,11 +1,11 @@
 //
 // Created by hanyuan on 12/1/20.
-//
+// Team member: Hanyuan Wu, Zhihao Shu
 
 #include "process.h"
 #include <search.h>
 #include <stdio.h>
-#define _GNU_SOURCE
+
 
 /**
  * normal enqueue action
@@ -49,21 +49,6 @@ Process* deQueue(Queue* queue){
     queue->numIO--;
     return res;
 }
-
-/**
- * Free the queue and all its nodes
- * @param queue to be freed
- */
-void destoryQueue(Queue* queue){
-    while(queue->first != NULL){
-        QueueNode* buf = queue->first;
-        queue->first = queue->first->next;
-        free(buf);
-        buf = NULL;
-    }
-    free(queue);
-}
-
 
 
 /**

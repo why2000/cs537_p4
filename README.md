@@ -29,4 +29,20 @@
 * By running without specfying [target], it will make the first target build in makefile
 * IO redirections are allowed in command lines within the makefile, using `<` and `>`.
 * can check and report cycle (infinite dependent loop) in makefile
-* It takes somehow a long time to deal with 12 million... While I think most of time is spent on fgets().. but currently having no time to write a new method.
+
+## Run Time Warning
+
+* This is the printout message (with real time) from one run. It takes about 3-8 minues to finish one run... Still optimizing. All three algo can complete 12million.addrtrace under 10 min, but bigmix cost much longer...
+
+|Tracefile name|12million.addrtrace|
+|---|---|
+|AMU|0.956025|
+|ARP|0.001124|
+|TMR|12000000|
+|TPI|5337|
+|Running Time (ticks)| 10674561551|
+|real|4m26.429s|
+|user|4m19.574s|
+|sys|0m6.808s|
+
+

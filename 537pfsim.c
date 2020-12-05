@@ -1,8 +1,10 @@
+//
+// Created by hanyuan on 12/1/20.
+// Team member: Hanyuan Wu, Zhihao Shu
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include "537pfsim.h"
 #include "traceReader.h"
 

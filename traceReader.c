@@ -1,6 +1,6 @@
 //
 // Created by hanyuan on 12/1/20.
-//
+// Team member: Hanyuan Wu, Zhihao Shu
 
 #include <stdio.h>
 #include <stdlib.h>

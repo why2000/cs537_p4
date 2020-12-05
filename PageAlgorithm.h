@@ -1,6 +1,6 @@
 //
-// Created by hanyuan on 12/4/20.
-//
+// Created by hanyuan on 12/1/20.
+// Team member: Hanyuan Wu, Zhihao Shu
 
 #ifndef CS537_P4_PAGEALGORITHM_H
 #define CS537_P4_PAGEALGORITHM_H

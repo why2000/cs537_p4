@@ -1,6 +1,6 @@
 //
-// Created by hanyuan on 12/4/20.
-//
+// Created by hanyuan on 12/1/20.
+// Team member: Hanyuan Wu, Zhihao Shu
 
 #include "PageAlgorithm.h"
 #include <stdlib.h>
@@ -76,7 +76,6 @@ PageTableEntry* out(EntryQueue* queue){
 
 /**
  * delete from inside the queue
- * @param queue
  * @param pid
  * @param vpn
  */
@@ -100,30 +99,18 @@ void deleteIn(ulong pid, ulong vpn) {
         ptr = ptr->next;
     }
 }
-//    EntryNode* prePtr = entryQueue->first;
-//    if(entryQueue->first == entryQueue->last) entryQueue->last = NULL;
-//    if(pid == prePtr->entry->pid && vpn == prePtr->entry->vpn){
-//        entryQueue->first = entryQueue->first->next;
-//        entryQueue->size--;
-//        free(prePtr);
-//        return;
-//    }
-//    while(prePtr->next != NULL){
-//        EntryNode* curPtr = prePtr->next;
-//        if(pid == curPtr->entry->pid && vpn == curPtr->entry->vpn){
-//            entryQueue->size--;
-//            EntryNode* bufPtr = curPtr->next;
-//            curPtr->next = NULL;
-//            prePtr->next = bufPtr;
-//            free(curPtr);
-//            return;
-//        }
-//        prePtr = prePtr->next;
-//    }
 
 
 
 
+
+/**
+ * load an entry from disk to mem
+ * @param root page table root
+ * @param pid
+ * @param vpn
+ * @param sta statistics
+ */
 void loadEntry(void** root, ulong pid, ulong vpn, Statistic* sta){
     if(entryQueue == NULL){
         entryQueue = (EntryQueue*)malloc(sizeof(EntryQueue));
@@ -137,7 +124,7 @@ void loadEntry(void** root, ulong pid, ulong vpn, Statistic* sta){
     // already loaded
     if(getEntry(root, pid, vpn) != NULL) return;
     // not full
-    if(sta->CMU < sta->TMR){
+    if(sta->CMU < sta->TPF){
         if(addEntry(root, entry) == NULL){
             fprintf(stderr, "failed adding entry\n");
             exit(1);

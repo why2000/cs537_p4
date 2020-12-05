@@ -1,6 +1,6 @@
 //
-// Created by hanyuan on 12/5/20.
-//
+// Created by hanyuan on 12/1/20.
+// Team member: Hanyuan Wu, Zhihao Shu
 
 #include "PageAlgorithm.h"
 #include <stdlib.h>
@@ -9,7 +9,7 @@
 // private global vars, for twalk usage
 static PageTableEntry* least;
 
-static void findLeast(const void* nodeP, const VISIT which, int level){
+static void findLeast(const void* nodeP, const VISIT which, int foo){
     PageTableEntry* node = *(PageTableEntry**) nodeP;
     if(which ==  preorder||which == leaf){
         if(least == NULL) least = node;
@@ -20,6 +20,13 @@ static void findLeast(const void* nodeP, const VISIT which, int level){
 }
 
 
+/**
+ * load an entry from disk to mem
+ * @param root page table root
+ * @param pid
+ * @param vpn
+ * @param sta statistics
+ */
 void loadEntry(void** root, ulong pid, ulong vpn, Statistic* sta){
 
     PageTableEntry* entry = (PageTableEntry*)malloc(sizeof(PageTableEntry));
@@ -30,7 +37,7 @@ void loadEntry(void** root, ulong pid, ulong vpn, Statistic* sta){
     // already loaded
     if(getEntry(root, pid, vpn) != NULL) return;
     // not full
-    if(sta->CMU < sta->TMR){
+    if(sta->CMU < sta->TPF){
         if(addEntry(root, entry) == NULL){
             fprintf(stderr, "failed adding entry\n");
             exit(1);
@@ -38,7 +45,7 @@ void loadEntry(void** root, ulong pid, ulong vpn, Statistic* sta){
         sta->CMU++;
     }
     else{
-        twalk(root, findLeast);
+        twalk(*root, findLeast);
         deleteEntry(root, least);
         least = NULL;
         if(addEntry(root, entry) == NULL){
@@ -71,6 +78,13 @@ static void deleteAction(const void* nodeP, const VISIT which, int foo){
     }
 }
 
+/**
+ * End a process's lifecycle
+ * @param PTRoot PageTableRoot
+ * @param processRoot
+ * @param process to be ended
+ * @param sta statistics
+ */
 void endProcess(void** PTRoot, void** processRoot, Process* process, Statistic* sta) {
     deletePid = process->pid;
     deleteList = (struct DeleteList*)malloc(sizeof(struct DeleteList));
