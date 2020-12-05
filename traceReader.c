@@ -4,9 +4,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "traceReader.h"
-#include "process.h"
 #include <search.h>
+#include "traceReader.h"
+
 
 /**
  * Set up the graph and start making
@@ -23,9 +23,10 @@ void parseTrace(const char* const tracefile, const ulong pageSize, const ulong r
         exit(1);
     }
     Statistic* sta = (Statistic*)malloc(sizeof(Statistic));
-    sta->TMU = realMemSize/pageSize;
-    Process* rootProcess;
+    sta->TPF = realMemSize/pageSize;
+    void* rootProcess;
     loadProcess(fp, sta, &rootProcess);
+    void* rootEntry;
     fseek(fp, 0, SEEK_SET);
     // value is pid
     Queue* IOQueue;
@@ -53,7 +54,7 @@ void parseTrace(const char* const tracefile, const ulong pageSize, const ulong r
         process->currVpn = vpn;
         process->curr = filePlace;
         // check page
-        //if(getPage(pid, vpn) == NULL)
+        if(getEntry(rootEntry, pid, vpn) == NULL)
         {
             enQueue(process, IOQueue);
             process->waiting = 1;
@@ -61,12 +62,14 @@ void parseTrace(const char* const tracefile, const ulong pageSize, const ulong r
         }
         // if process complete after a normal access, not waiting for IO
         if(filePlace > process->last && !(process->waiting)){
-            // endProcess();
+            // decrease CRP and CMUs
+            endProcess(&rootEntry, &rootProcess, process, sta);
             process = NULL;
-            sta->CRP--;
         }
         // ticking (this ref action finished)
         sta->RT++;
+        sta->TMU+=sta->CMU;
+        sta->TRP+=sta->CRP;
         if(IOQueue->first != NULL){
             IOQueue->counter++;
         }
@@ -77,15 +80,19 @@ void parseTrace(const char* const tracefile, const ulong pageSize, const ulong r
             newProcess = deQueue(IOQueue);
             newProcess->waiting = 0;
             // Page loaded and get read, additional 1ns spent here
-            // loadPage(newProcess->pid, newProcess->currVpn);
+            // change CMU inside
+            loadEntry(rootEntry, newProcess->pid, newProcess->currVpn, sta);
+
             sta->RT++;
+            sta->TMU+=sta->CMU;
+            sta->TRP+=sta->CRP;
             IOQueue->counter++;
             // if the IOtick is 1, there should be a recursive check, unrealistic here
             // If process completes after IO
             if(newProcess->curr == newProcess->last){
-                // endProcess(newProcess);
+                // decrease CRP and CMUs
+                endProcess(&rootEntry, &rootProcess, newProcess, sta);
                 newProcess = NULL;
-                sta->CRP--;
                 continue;
             }
             // judge whether to go backward
@@ -103,12 +110,21 @@ void parseTrace(const char* const tracefile, const ulong pageSize, const ulong r
         fprintf(stderr, "Unsupported tracefile format\n");
         exit(1);
     }
+    outputStatistic(tracefile, sta);
 
 }
 
+void outputStatistic(const char* const tracefile, const Statistic* const sta){
+    printf("Tracefile name: %s\n", tracefile);
+    printf("AMU: %f\n", 1.0*(sta->TMU)/(1.0*(sta->TPF)*(sta->RT)));
+    printf("ARP: %f\n", 1.0*(sta->TRP)/(sta->RT));
+    printf("TMR: %ld", sta->TMR);
+    printf("TPI: %ld", sta->TPI);
+    printf("Running Time (ticks): %ld", sta->RT);
 
+}
 
-void loadProcess(FILE* fp, Statistic* sta, Process** root){
+void loadProcess(FILE* fp, Statistic* sta, void** root){
     char bufLine[MAX_LINE];
     sta->TMR = 0;
     while(fgets(bufLine, MAX_LINE, fp) != NULL){

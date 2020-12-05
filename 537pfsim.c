@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "537pfsim.h"
+#include "traceReader.h"
 
 /**
  * private method, just to print usage...

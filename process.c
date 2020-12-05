@@ -60,6 +60,8 @@ void destoryQueue(Queue* queue){
     free(queue);
 }
 
+
+
 /**
  * return 1 if Process a has larger pid, return -1 if b has larger pid, return 0 if same pid
  * @param a one Process
@@ -75,12 +77,12 @@ int processCompare(const void* a, const void* b){
 
 }
 
-Process* getProcess(Process** root, ulong pid){
+Process* getProcess(void** root, ulong pid){
     Process* res;
     void* buf;
     Process keyProcess;
     keyProcess.pid = pid;
-    if((buf = tfind(&keyProcess, (void**)root, processCompare)) == NULL){
+    if((buf = tfind(&keyProcess, root, processCompare)) == NULL){
         return NULL;
     }
     res = (Process*) buf;
@@ -94,7 +96,7 @@ Process* getProcess(Process** root, ulong pid){
  * @param Process to be added
  * @return the
  */
-Process* addProcess(Process** root, Process* process){
+Process* addProcess(void** root, Process* process){
     ulong pid = process->pid;
     void* buf;
     Process* res;
@@ -102,13 +104,59 @@ Process* addProcess(Process** root, Process* process){
         return res;
     }
     else{
-        if((buf = tsearch(process, (void**)root, processCompare)) == NULL){
+        if((buf = tsearch(process, root, processCompare)) == NULL){
             fprintf(stderr, "Unable to add node\n");
             exit(1);
         }
         res = (Process*) buf;
         return res;
     }
+}
+
+static ulong deletePid;
+static struct DeleteList{
+    PageTableEntry* toBeDeleted;
+    struct DeleteList* next;
+} *deleteList;
+
+static void deleteAction(const void* nodeP, const VISIT which, int level){
+    PageTableEntry* node = (PageTableEntry*) nodeP;
+    if(which == postorder||which == leaf){
+        if(node->pid == deletePid){
+            struct DeleteList* buf = (struct DeleteList*)malloc(sizeof(struct DeleteList));
+            buf->toBeDeleted = node;
+            buf->next = deleteList;
+            deleteList = buf;
+        }
+    }
+}
+
+/**
+ * Remove all entries for the given process
+ * @param root
+ * @param process
+ * @param sta
+ * @return
+ */
+Process* endProcess(void** PTRoot, void** processRoot, Process* process, Statistic* sta){
+    deletePid = process->pid;
+    twalk(PTRoot, deleteAction);
+    struct DeleteList* ptr = deleteList;
+    while(ptr != NULL){
+        struct DeleteList* buf = ptr;
+        ptr = ptr->next;
+        tdelete(buf->toBeDeleted, PTRoot, entryCompare);
+        free(buf);
+        sta->CMU--;
+    }
+    while(deleteList != NULL){
+        struct DeleteList* buf = deleteList;
+        deleteList = deleteList->next;
+        free(buf);
+        buf = NULL;
+    }
+    tdelete(process, processRoot, processCompare);
+    sta->CRP--;
 }
 
 

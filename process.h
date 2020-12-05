@@ -7,8 +7,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "pageTable.h"
+#include "traceReader.h"
 
 enum IOtick {IOtick = 2000000};
+
+
 
 typedef struct Process {
     ulong pid;
@@ -19,9 +22,10 @@ typedef struct Process {
     ulong started;
 } Process;
 
-Process* endProcess(Process** root, Process* process);
-Process* addProcess(Process** root, Process* process);
-Process* getProcess(Process** root, ulong pid);
+int processCompare(const void* a, const void* b);
+Process* addProcess(void** root, Process* process);
+Process* getProcess(void** root, ulong pid);
+Process* endProcess(void** PTRoot, void** processRoot, Process* process, Statistic* sta);
 
 // IO queue for processes
 typedef struct QueueNode{
