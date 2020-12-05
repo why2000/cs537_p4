@@ -5,7 +5,6 @@
 #ifndef CS537_P4_PAGETABLE_H
 #define CS537_P4_PAGETABLE_H
 #include <stdlib.h>
-#include "process.h"
 
 typedef struct Statistic {
     ulong TPI; // total page faults
@@ -17,18 +16,19 @@ typedef struct Statistic {
     ulong TMU; // total page frames occupied, sum of each tick's data
     ulong CMU;
     ulong RT; // total ticks
-
 } Statistic;
 
 typedef struct PageTableEntry{
     ulong pid;
     ulong vpn;
+    ulong useTime;
+    ulong freeBit;
 } PageTableEntry;
 
 int entryCompare(const void* a, const void* b);
 PageTableEntry* getEntry(void** root, ulong pid, ulong vpn);
 PageTableEntry* addEntry(void** root, PageTableEntry* entry);
-PageTableEntry* deleteEntry(void** root, PageTableEntry* entry);
+void deleteEntry(void** root, PageTableEntry* entry);
 
 
 

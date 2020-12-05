@@ -4,9 +4,11 @@
 
 #ifndef CS537_P4_TRACEREADER_H
 #define CS537_P4_TRACEREADER_H
-#include "537pfsim.h"
-#include "process.h"
 #include "PageAlgorithm.h"
+#include "537pfsim.h"
+#include "pageTable.h"
+#include "process.h"
+
 
 
 

@@ -51,6 +51,7 @@ int main(int argc, char** argv) {
     // set params
     pageSize = (pageSize == 0? defaultPageSize: pageSize);
     realMemSize = (realMemSize == 0? defaultRealMemSize: realMemSize);
+    realMemSize *= (1<<20);
     if(pageSize > realMemSize){
         fprintf(stderr, "Error: Page size %ld should not be larger than real memory size %ld\n",
                 pageSize, realMemSize);

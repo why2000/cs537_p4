@@ -4,6 +4,14 @@
 
 #include "pageTable.h"
 #include <search.h>
+#include <stdio.h>
+
+//void printPageTable2(const void* nodeP, const VISIT which, int level){
+//    PageTableEntry* node = *(PageTableEntry**) nodeP;
+//    if(which == postorder||which == leaf){
+//        printf("pid:%ld, vpn:%ld\n", node->pid, node->vpn);
+//    }
+//}
 
 
 /**
@@ -15,14 +23,18 @@
  */
 PageTableEntry* getEntry(void** root, ulong pid, ulong vpn){
     struct PageTableEntry* res;
-    void* buf;
+    void* buf = NULL;
     PageTableEntry keyEntry;
     keyEntry.pid = pid;
     keyEntry.vpn = vpn;
-    if((buf = tfind(&keyEntry, root, entryCompare)) == NULL){
+//    if(pid == 9 && vpn == 2){
+//        twalk(*root, printPageTable2);
+//    }
+    buf = tfind(&keyEntry, root, entryCompare);
+    if(buf == NULL){
         return NULL;
     }
-    res = (PageTableEntry*) buf;
+    res = *(PageTableEntry**) buf;
     return res;
 }
 
@@ -34,21 +46,15 @@ PageTableEntry* getEntry(void** root, ulong pid, ulong vpn){
  * @return the added entry
  */
 PageTableEntry* addEntry(void** root, PageTableEntry* entry){
-    ulong pid = entry->pid;
-    ulong vpn = entry->vpn;
-    void* buf;
+    void* buf = NULL;
     PageTableEntry* res;
-    if((res = getEntry(root, pid, vpn)) != NULL){
-        return res;
+    if((buf = tsearch(entry, root, entryCompare)) == NULL){
+        fprintf(stderr, "Unable to add node\n");
+        exit(1);
     }
-    else{
-        if((buf = tsearch(entry, root, entryCompare)) == NULL){
-            fprintf(stderr, "Unable to add node\n");
-            exit(1);
-        }
-        res = (PageTableEntry*) buf;
-        return res;
-    }
+    res = *(PageTableEntry**) buf;
+    return res;
+
 }
 
 /**
@@ -58,33 +64,37 @@ PageTableEntry* addEntry(void** root, PageTableEntry* entry){
  * @param entry to be deleted
  * @return the deleted entry (NULL if not found)
  */
-PageTableEntry* deleteEntry(void** root, PageTableEntry* entry){
+void deleteEntry(void** root, PageTableEntry* entry){
     ulong pid = entry->pid;
     ulong vpn = entry->vpn;
     void* buf;
     PageTableEntry* res;
-    if((res = getEntry(root, pid, vpn)) != NULL){
-        return res;
+    if(getEntry(root, pid, vpn) == NULL){
+        return;
     }
     else{
-        if((buf = tdelete(entry, root, entryCompare)) == NULL){
+        if(tdelete(entry, root, entryCompare) == NULL){
             fprintf(stderr, "Unable to delete node\n");
             exit(1);
         }
-        res = (PageTableEntry*) buf;
-        return res;
     }
 }
 
 
+static ulong hash(ulong pid, ulong vpn){
+    const int shift = 22;
+    return (pid<<shift)+vpn;
+}
 
 
 int entryCompare(const void* a, const void* b){
     PageTableEntry* pA = (PageTableEntry*)a;
     PageTableEntry* pB = (PageTableEntry*)b;
-    if(pA->pid == pB->pid && pA->vpn == pB->vpn) return 0;
+    ulong hashValueA = hash(pA->pid, pA->vpn);
+    ulong hashValueB = hash(pB->pid, pB->vpn);
+    if(hashValueA > hashValueB) return 1;
     // not that balanced, but does not matter (as we only need to search)
-    else if(pA->pid + pA->vpn > pB->pid + pB->vpn) return 1;
-    else return -1;
+    else if(hashValueA < hashValueB) return -1;
+    else return 0;
 }
 

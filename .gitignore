@@ -1,6 +1,7 @@
 /cmake-build-debug/
 /.idea/
 *.o
+537pfsim-*
 CMakeLists.txt
 *.addrtrace
 /test/

@@ -17,12 +17,16 @@ void enQueue(Process* process, Queue* queue){
         queue->first = (QueueNode*)malloc(sizeof(QueueNode));
         queue->first->process = process;
         queue->last = queue->first;
+        queue->last->next = NULL;
+        queue->first->next = NULL;
     }
     else{
         queue->last->next = (QueueNode*)malloc(sizeof(QueueNode));
         queue->last = queue->last->next;
         queue->last->process = process;
+        queue->last->next = NULL;
     }
+    queue->numIO++;
 }
 
 /**
@@ -37,12 +41,13 @@ Process* deQueue(Queue* queue){
     }
     QueueNode* buf = queue->first;
     Process* res = buf->process;
-    if(queue->last == queue->first){
-        queue->last = queue->last->next;
+    if(queue->first->next == NULL){
+        queue->last = NULL;
     }
     queue->first = queue->first->next;
-    free(buf);
+    //free(buf);
     buf = NULL;
+    queue->numIO--;
     return res;
 }
 
@@ -79,13 +84,13 @@ int processCompare(const void* a, const void* b){
 
 Process* getProcess(void** root, ulong pid){
     Process* res;
-    void* buf;
+    void* buf = NULL;
     Process keyProcess;
     keyProcess.pid = pid;
     if((buf = tfind(&keyProcess, root, processCompare)) == NULL){
         return NULL;
     }
-    res = (Process*) buf;
+    res = *(Process**) buf;
     return res;
 }
 
@@ -98,7 +103,7 @@ Process* getProcess(void** root, ulong pid){
  */
 Process* addProcess(void** root, Process* process){
     ulong pid = process->pid;
-    void* buf;
+    void* buf = NULL;
     Process* res;
     if((res = getProcess(root, pid)) != NULL){
         return res;
@@ -108,56 +113,36 @@ Process* addProcess(void** root, Process* process){
             fprintf(stderr, "Unable to add node\n");
             exit(1);
         }
-        res = (Process*) buf;
+        res = *(Process**) buf;
         return res;
     }
 }
 
-static ulong deletePid;
-static struct DeleteList{
-    PageTableEntry* toBeDeleted;
-    struct DeleteList* next;
-} *deleteList;
-
-static void deleteAction(const void* nodeP, const VISIT which, int level){
-    PageTableEntry* node = (PageTableEntry*) nodeP;
-    if(which == postorder||which == leaf){
-        if(node->pid == deletePid){
-            struct DeleteList* buf = (struct DeleteList*)malloc(sizeof(struct DeleteList));
-            buf->toBeDeleted = node;
-            buf->next = deleteList;
-            deleteList = buf;
+/**
+ * delete a process from the tree from root
+ * @param root the tree's root
+ * @param process to be deleted
+ */
+void* deleteProcess(void** root, Process* process){
+    ulong pid = process->pid;
+    void* buf;
+    Process* res;
+    if((res = getProcess(root, pid)) == NULL){
+        return NULL;
+    }
+    else{
+        if(tdelete(process, root, processCompare) == NULL){
+            fprintf(stderr, "Unable to delete node\n");
+            exit(1);
         }
     }
 }
 
-/**
- * Remove all entries for the given process
- * @param root
- * @param process
- * @param sta
- * @return
- */
-Process* endProcess(void** PTRoot, void** processRoot, Process* process, Statistic* sta){
-    deletePid = process->pid;
-    twalk(PTRoot, deleteAction);
-    struct DeleteList* ptr = deleteList;
-    while(ptr != NULL){
-        struct DeleteList* buf = ptr;
-        ptr = ptr->next;
-        tdelete(buf->toBeDeleted, PTRoot, entryCompare);
-        free(buf);
-        sta->CMU--;
-    }
-    while(deleteList != NULL){
-        struct DeleteList* buf = deleteList;
-        deleteList = deleteList->next;
-        free(buf);
-        buf = NULL;
-    }
-    tdelete(process, processRoot, processCompare);
-    sta->CRP--;
-}
+
+
+
+
+
 
 
 

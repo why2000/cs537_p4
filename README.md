@@ -29,3 +29,4 @@
 * By running without specfying [target], it will make the first target build in makefile
 * IO redirections are allowed in command lines within the makefile, using `<` and `>`.
 * can check and report cycle (infinite dependent loop) in makefile
+* It takes somehow a long time to deal with 12 million... While I think most of time is spent on fgets().. but currently having no time to write a new method.

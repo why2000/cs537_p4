@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "pageTable.h"
-#include "traceReader.h"
 
 enum IOtick {IOtick = 2000000};
 
@@ -20,12 +19,13 @@ typedef struct Process {
     ulong last;
     ulong waiting;
     ulong started;
+    ulong ended;
 } Process;
 
 int processCompare(const void* a, const void* b);
 Process* addProcess(void** root, Process* process);
 Process* getProcess(void** root, ulong pid);
-Process* endProcess(void** PTRoot, void** processRoot, Process* process, Statistic* sta);
+void* deleteProcess(void** root, Process* process);
 
 // IO queue for processes
 typedef struct QueueNode{
@@ -37,6 +37,7 @@ typedef struct Queue{
     struct QueueNode* first;
     struct QueueNode* last;
     ulong counter;
+    ulong numIO;
 } Queue;
 
 void enQueue(Process* process, Queue* queue);
