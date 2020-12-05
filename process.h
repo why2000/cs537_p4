@@ -25,7 +25,7 @@ typedef struct Process {
 int processCompare(const void* a, const void* b);
 Process* addProcess(void** root, Process* process);
 Process* getProcess(void** root, ulong pid);
-void* deleteProcess(void** root, Process* process);
+void deleteProcess(void** root, Process* process);
 
 // IO queue for processes
 typedef struct QueueNode{

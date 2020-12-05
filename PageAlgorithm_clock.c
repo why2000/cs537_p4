@@ -7,13 +7,13 @@
 #include <search.h>
 
 // private global vars, for twalk usage
-int saved = 0;
-int idx;
-int pageNum;
-PageTableEntry* available;
+static int saved = 0;
+static int idx;
+static int pageNum;
+static PageTableEntry* available;
 
 // a clock on the tree :P
-void findAvailable(const void* nodeP, const VISIT which, int level){
+static void findAvailable(const void* nodeP, const VISIT which, int foo){
     PageTableEntry* node = *(PageTableEntry**) nodeP;
     if(which ==  preorder||which == leaf){
         if(idx>=saved && available == NULL){
@@ -69,7 +69,7 @@ struct DeleteList{
     struct DeleteList* next;
 } *deleteList;
 
-static void deleteAction(const void* nodeP, const VISIT which, int level){
+static void deleteAction(const void* nodeP, const VISIT which, int foo){
     PageTableEntry* node = *(PageTableEntry**) nodeP;
     if(which ==  preorder||which == leaf){
         if(node->pid == deletePid){

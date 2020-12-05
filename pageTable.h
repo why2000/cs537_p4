@@ -9,7 +9,7 @@
 typedef struct Statistic {
     ulong TPI; // total page faults
     ulong TMR; // total mem ref
-    ulong CRP;  // current Running Processes
+    ulong CRP;  // current Runable Processes
     ulong TRP; // total runnable processes, sum of each tick's data
     // AMU = TMU/(TPF*RT)
     ulong TPF; // total page frames, realMemSize/pageSize

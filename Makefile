@@ -4,11 +4,10 @@ WARNING_FLAGS = -Wall -Wextra
 EXE = 537make
 SCAN_BUILD_DIR = scan-build-out
 
-537pfsim: 537pfsim-clock 537pfsim-lru 537pfsim-fifo
-
+537pfsim: 537pfsim-clock 537pfsim-lru 537pfsim-fifo;
 
 537pfsim-clock: 537pfsim.o PageAlgorithm_clock.o pageTable.o traceReader.o process.o
-	$(CC) -o 537pfsim-clock 537pfsim.o traceReader.o process.o pageTable.o PageAlgorithm_clock.o
+	$(CC) -o 537pfsim-clock 537pfsim.o PageAlgorithm_clock.o pageTable.o traceReader.o process.o
 
 537pfsim-lru: 537pfsim.o PageAlgorithm_lru.o pageTable.o traceReader.o process.o
 	$(CC) -o 537pfsim-lru 537pfsim.o PageAlgorithm_lru.o pageTable.o traceReader.o process.o
@@ -38,7 +37,7 @@ process.o: process.c process.h pageTable.h
 	$(CC) $(WARNING_FLAGS) -c 537pfsim.c
 
 clean:
-	rm -f $(EXE) *.o
+	rm -f 537pfsim-clock 537pfsim-lru 537pfsim-fifo *.o
 	rm -rf $(SCAN_BUILD_DIR)
 
 

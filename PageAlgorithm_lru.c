@@ -7,9 +7,9 @@
 #include <search.h>
 
 // private global vars, for twalk usage
-PageTableEntry* least;
+static PageTableEntry* least;
 
-void findLeast(const void* nodeP, const VISIT which, int level){
+static void findLeast(const void* nodeP, const VISIT which, int level){
     PageTableEntry* node = *(PageTableEntry**) nodeP;
     if(which ==  preorder||which == leaf){
         if(least == NULL) least = node;
@@ -57,7 +57,7 @@ struct DeleteList{
     struct DeleteList* next;
 } *deleteList;
 
-static void deleteAction(const void* nodeP, const VISIT which, int level){
+static void deleteAction(const void* nodeP, const VISIT which, int foo){
     PageTableEntry* node = *(PageTableEntry**) nodeP;
     if(which ==  preorder||which == leaf){
         if(node->pid == deletePid){

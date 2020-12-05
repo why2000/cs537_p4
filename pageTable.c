@@ -67,8 +67,6 @@ PageTableEntry* addEntry(void** root, PageTableEntry* entry){
 void deleteEntry(void** root, PageTableEntry* entry){
     ulong pid = entry->pid;
     ulong vpn = entry->vpn;
-    void* buf;
-    PageTableEntry* res;
     if(getEntry(root, pid, vpn) == NULL){
         return;
     }

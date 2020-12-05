@@ -17,8 +17,8 @@ int pUsage(){
 
 int main(int argc, char** argv) {
 
-    const int defaultPageSize = 4096;
-    const int defaultRealMemSize = 1;
+    const uint defaultPageSize = 4096;
+    const uint defaultRealMemSize = 1;
     char tracefile[MAX_LINE];
     tracefile[0] = '\0';
     ulong pageSize = 0;
@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
             char* endBuf;
             if(++i >= argc || (pageSize = strtoul(argv[i], &endBuf, 10)) == 0)
                 return pUsage();
-            if(((uint)pageSize & (uint)pageSize-1) != 0){
+            if(((uint)pageSize & ((uint)pageSize-1)) != 0){
                 fprintf(stderr, "Page size must be 2^n, current size %ld not allowed\n", pageSize);
                 exit(1);
             }

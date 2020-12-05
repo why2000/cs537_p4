@@ -83,7 +83,6 @@ PageTableEntry* out(EntryQueue* queue){
 void deleteIn(ulong pid, ulong vpn) {
     if (entryQueue->first == NULL) return;
     EntryNode *ptr = entryQueue->first;
-    EntryNode *tgt;
     if (ptr->entry->pid == pid && ptr->entry->vpn == vpn) {
         out(entryQueue);
         return;
@@ -167,7 +166,7 @@ struct DeleteList{
     struct DeleteList* next;
 } *deleteList;
 
-static void deleteAction(const void* nodeP, const VISIT which, int level){
+static void deleteAction(const void* nodeP, const VISIT which, int foo){
     PageTableEntry* node = *(PageTableEntry**) nodeP;
     if(which ==  preorder||which == leaf){
         if(node->pid == deletePid){
@@ -203,36 +202,6 @@ void endProcess(void** PTRoot, void** processRoot, Process* process, Statistic* 
     deleteProcess(processRoot, process);
     sta->CRP--;
 }
-//    EntryNode *ptr = entryQueue->first;
-//    EntryNode *pre = ptr;
-//    while (pre != NULL) {
-//        if (pre->entry->pid == deletePid) {
-//            PageTableEntry *entry = pre->entry;
-//            //deleteEntry(PTRoot, entry);
-//            // both add one
-//            ptr = pre->next;
-//            free(pre);
-//            pre = ptr;
-//            entryQueue->first = pre;
-//            if (pre == NULL) entryQueue->last = NULL;
-//            sta->CMU--;
-//            entryQueue->size--;
-//            continue;
-//        }
-//        // ptr add one
-//        if ((ptr = pre->next) == NULL) return;
-//        if (deletePid == ptr->entry->pid) {
-//            PageTableEntry *entry = ptr->entry;
-//            //deleteEntry(PTRoot, entry);
-//            pre->next = ptr->next;
-//            free(ptr);
-//            ptr = NULL;
-//            sta->CMU--;
-//            entryQueue->size--;
-//        } else {
-//            pre = pre->next;
-//        }
-//    }
 
 
 

@@ -42,9 +42,9 @@ void parseTrace(const char* const tracefile, const ulong pageSize, const ulong r
     }
     IOQueue->first = NULL;
     IOQueue->last = NULL;
-    while(IOQueue->numIO != 0 || !feof(fp)) {
+    while(IOQueue->numIO != 0 || sta->CRP>0) {
         int IOhold = 0;
-        if (!feof(fp)) {
+        if (!feof(fp) && sta->CRP > 0) {
             // get data
             ulong pid, vpn;
             fgets(bufLine, MAX_LINE, fp);
@@ -76,6 +76,7 @@ void parseTrace(const char* const tracefile, const ulong pageSize, const ulong r
                 process->waiting = 1;
                 sta->CRP--;
                 sta->TPI++;
+                //printf("PID:%ld, VPN:%ld, tick:%ld, TMU:%ld, CMU:%ld\n", pid, vpn, sta->RT+1, sta->TMU, sta->CMU);
             }else{
                 entry->useTime = sta->RT+1;
                 entry->freeBit = 1;
@@ -90,7 +91,7 @@ void parseTrace(const char* const tracefile, const ulong pageSize, const ulong r
             sta->RT++;
             sta->TMU+=sta->CMU;
             sta->TRP+=sta->CRP;
-            //printf("PID:%ld, VPN:%ld, tick:%ld, TMU:%ld, CMU:%ld\n", pid, vpn, sta->RT, sta->TMU, sta->CMU);
+
             if(IOQueue->numIO != 0){
                 IOQueue->counter++;
                 if(IOhold == 1){
@@ -100,18 +101,20 @@ void parseTrace(const char* const tracefile, const ulong pageSize, const ulong r
             }
         }
         else{
-            ulong period = IOtick - IOQueue->counter;
-            IOQueue->counter = IOtick;
-            sta->RT += period;
-            sta->TMU += sta->CMU*period;
-            sta->TRP += sta->CRP*period;
+            if(IOQueue->numIO != 0) {
+                ulong period = IOtick - IOQueue->counter;
+                IOQueue->counter = IOtick;
+                sta->RT += period;
+                sta->TMU += sta->CMU * period;
+                sta->TRP += sta->CRP * period;
+            }
         }
 
         // IO queue action
-        if(IOQueue->counter == IOtick){
+        if(IOQueue->counter == IOtick && IOQueue->numIO != 0){
             Process* newProcess;
             IOQueue->counter = 0;
-            newProcess = deQueue(IOQueue);
+            if((newProcess = deQueue(IOQueue))==NULL)continue;
             newProcess->waiting = 0;
             sta->CRP++;
 
@@ -136,9 +139,9 @@ void parseTrace(const char* const tracefile, const ulong pageSize, const ulong r
                 newProcess = NULL;
                 continue;
             }
-            printf("PID:%ld, VPN:%ld, tick:%ld, TMU:%ld, CMU:%ld\n", newProcess->pid, newProcess->currVpn, sta->RT, sta->TMU, sta->CMU);
+            //printf("PID:%ld, VPN:%ld, tick:%ld, TMU:%ld, CMU:%ld\n", newProcess->pid, newProcess->currVpn, sta->RT, sta->TMU, sta->CMU);
             // judge whether to go backward
-            if(newProcess->curr < ftell(fp)){
+            if(newProcess->curr < (ulong)ftell(fp)){
                 if(fseek(fp, newProcess->curr, SEEK_SET) == -1){
                     fprintf(stderr, "Error moving file pointer\n");
                     exit(1);
@@ -201,6 +204,7 @@ void loadProcess(FILE* fp, Statistic* sta, void** root){
  * @return 0 if read succeeded, 1 if failed, 2 if empty
  */
 int readPair(ulong* first, ulong* second, const char* const rawStr){
+
     ulong a = 0, b = 0;
     ulong i = 0;
     // do a left strip

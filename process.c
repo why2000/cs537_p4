@@ -32,12 +32,11 @@ void enQueue(Process* process, Queue* queue){
 /**
  * normal dequeue action (and free the dequeued node)
  * @param queue the queue to work on
- * @return the dequeued node's process
+ * @return the dequeued node's process (Null if empty)
  */
 Process* deQueue(Queue* queue){
     if(queue->first == NULL){
-        fprintf(stderr, "Attemp to dequeue an empty queue\n");
-        exit(1);
+        return NULL;
     }
     QueueNode* buf = queue->first;
     Process* res = buf->process;
@@ -123,12 +122,10 @@ Process* addProcess(void** root, Process* process){
  * @param root the tree's root
  * @param process to be deleted
  */
-void* deleteProcess(void** root, Process* process){
+void deleteProcess(void** root, Process* process){
     ulong pid = process->pid;
-    void* buf;
-    Process* res;
-    if((res = getProcess(root, pid)) == NULL){
-        return NULL;
+    if((getProcess(root, pid)) == NULL){
+        return;
     }
     else{
         if(tdelete(process, root, processCompare) == NULL){
